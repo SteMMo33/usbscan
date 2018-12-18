@@ -10,6 +10,15 @@
 #define BULK_EP_IN      0x81
 
 
+char* GetDescriptorTypeDesc(int type)
+{
+	switch (type) {
+	case LIBUSB_DT_DEVICE: return "DEVICE";
+	default: return "?";
+	}
+}
+
+
 char* GetClassDesc(int nClass, int nSubClass)
 {
 	static char desc[100];
@@ -86,6 +95,9 @@ int main (int argc, char** argv)
 	  }
 	 */
 
+	const struct libusb_version* ver = libusb_get_version();
+	printf("Lib ver: %d.%d.%d - %s\n", ver->major, ver->minor, ver->micro, ver->describe);
+
 	int nDevices = libusb_get_device_list( context, &deviceList);
 	printf("Found %d USB devices\n", nDevices);
 
@@ -106,11 +118,31 @@ int main (int argc, char** argv)
 				nBus, GetDeviceSpeed(speed));
 		printf("-- NumConfig:%d - MaxPacketSise:%d\n", devDescriptor.bNumConfigurations, devDescriptor.bMaxPacketSize0);
 
+		printf("-- Descriptor type: %s\n", GetDescriptorTypeDesc(devDescriptor.bDescriptorType));
+
+
+#define BUFFER_SIZE		100
+
 		int nConfig;
 		libusb_device_handle* devHandle;
-		libusb_open( pDevice, &devHandle);
-		libusb_get_configuration( devHandle, &nConfig);
-		libusb_close(devHandle);
+		unsigned char buffer[BUFFER_SIZE];
+
+		int nRet = libusb_open( pDevice, &devHandle);
+		if (nRet==0){
+			if (devDescriptor.iManufacturer){
+				libusb_get_string_descriptor_ascii( devHandle, devDescriptor.iManufacturer, buffer, BUFFER_SIZE);
+				printf("-- Manuf: %s\n", buffer);
+			}
+			if (devDescriptor.iProduct){
+				libusb_get_string_descriptor_ascii( devHandle, devDescriptor.iProduct, buffer, BUFFER_SIZE);
+				printf("-- Product: %s\n", buffer);
+			}
+
+			libusb_get_configuration( devHandle, &nConfig);
+
+			libusb_close(devHandle);
+		}
+		else printf("Open error: %d\n", nRet);
 
 		++i;
 	}
