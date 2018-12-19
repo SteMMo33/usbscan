@@ -1,0 +1,11 @@
+
+stefano@GhilbaDebian:~$ lsusb
+Bus 002 Device 002: ID 8087:0024 Intel Corp. Integrated Rate Matching Hub
+Bus 002 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 006: ID 0951:1643 Kingston Technology DataTraveler G3
+Bus 001 Device 005: ID 058f:9254 Alcor Micro Corp. Hub
+Bus 001 Device 004: ID 413c:2107 Dell Computer Corp. 
+Bus 001 Device 003: ID 046d:c03e Logitech, Inc. Premium Optical Wheel Mouse (M-BT58)
+Bus 001 Device 002: ID 8087:0024 Intel Corp. Integrated Rate Matching Hub
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+
