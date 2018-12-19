@@ -9,6 +9,10 @@
 #define BULK_EP_OUT     0x01
 #define BULK_EP_IN      0x81
 
+char gBuffer[300];
+
+
+
 
 char* GetDescriptorTypeDesc(int type)
 {
@@ -46,6 +50,15 @@ char* GetDeviceSpeed(int nSpeed)
 	default: return "? Not handled";
 	}
 }
+
+char* GetAttributesDesc (int nAttrib)
+{
+	gBuffer[0]=0;
+	if (nAttrib & 0x40) strcat( gBuffer, "SelfPowered ");
+	if (nAttrib & 0x20) strcat( gBuffer, "RemoteWakeup ");
+	return gBuffer;
+}
+
 
 /*
 int hotplug_callback(struct libusb_context *ctx, struct libusb_device *dev,
@@ -108,20 +121,23 @@ int main (int argc, char** argv)
 
 		libusb_get_device_descriptor( pDevice, &devDescriptor);
 
-		uint8_t nBus = libusb_get_device_address(pDevice);
+		uint8_t nBus = libusb_get_bus_number(pDevice);
+		uint8_t nAddr = libusb_get_device_address(pDevice);
 
 		int speed = libusb_get_device_speed(pDevice);
 
-		printf("%d - VID:%04X PID:%04X - class:%s - bus:%d speed:%s \n", i+1,
+		printf("\n%d - VID:%04X PID:%04X - class:%s - Bus:%d Device:%d - speed:%s \n",
+				i+1,
 				devDescriptor.idVendor, devDescriptor.idProduct,
 				GetClassDesc(devDescriptor.bDeviceClass, devDescriptor.bDeviceSubClass),
-				nBus, GetDeviceSpeed(speed));
+				nBus, nAddr,
+				GetDeviceSpeed(speed));
 		printf("-- NumConfig:%d - MaxPacketSise:%d\n", devDescriptor.bNumConfigurations, devDescriptor.bMaxPacketSize0);
 
 		printf("-- Descriptor type: %s\n", GetDescriptorTypeDesc(devDescriptor.bDescriptorType));
 
 
-#define BUFFER_SIZE		100
+#define BUFFER_SIZE		260
 
 		int nConfig;
 		libusb_device_handle* devHandle;
@@ -137,18 +153,40 @@ int main (int argc, char** argv)
 				libusb_get_string_descriptor_ascii( devHandle, devDescriptor.iProduct, buffer, BUFFER_SIZE);
 				printf("-- Product: %s\n", buffer);
 			}
+			if (devDescriptor.iSerialNumber){
+				libusb_get_string_descriptor_ascii( devHandle, devDescriptor.iSerialNumber, buffer, BUFFER_SIZE);
+				printf("-- Serial: %s\n", buffer);
+			}
 
-			libusb_get_configuration( devHandle, &nConfig);
+			// libusb_get_configuration( devHandle, &nConfig);
+
+			int n = 0;
+			struct libusb_config_descriptor* configDesc;
+			while( n < devDescriptor.bNumConfigurations ){
+				nRet = libusb_get_config_descriptor( pDevice, n, &configDesc);
+				if (nRet == LIBUSB_SUCCESS){
+					printf("--- MaxPower: %d\n", configDesc->MaxPower);
+					printf("--- bmAttributes: %02X - %s\n", configDesc->bmAttributes, GetAttributesDesc(configDesc->bmAttributes));
+					printf("--- NumInterfaces: %d\n", configDesc->bNumInterfaces);
+
+					libusb_free_config_descriptor(configDesc);
+				}
+				else {
+					printf("-- Error getting config descr\n");
+				};
+				++n;
+			}
 
 			libusb_close(devHandle);
 		}
-		else printf("Open error: %d\n", nRet);
+		else printf("-- Open error: %d\n", nRet);
 
 		++i;
 	}
 	libusb_free_device_list( deviceList, 1);
 
 	// Scanner Canon LIDE VID:04A9 PID:2202 FB620U
+	printf("\nOpening scanner ..\n");
 
 	libusb_device_handle *hScanner;
 
