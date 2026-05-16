@@ -4,6 +4,7 @@
 */
 
 #include "stdio.h"
+#include "string.h"
 #include "libusb-1.0/libusb.h"
 
 #define BULK_EP_OUT     0x01
@@ -132,6 +133,7 @@ int main (int argc, char** argv)
 				GetClassDesc(devDescriptor.bDeviceClass, devDescriptor.bDeviceSubClass),
 				nBus, nAddr,
 				GetDeviceSpeed(speed));
+
 		printf("-- NumConfig:%d - MaxPacketSise:%d\n", devDescriptor.bNumConfigurations, devDescriptor.bMaxPacketSize0);
 
 		printf("-- Descriptor type: %s\n", GetDescriptorTypeDesc(devDescriptor.bDescriptorType));
